@@ -75,16 +75,17 @@ impl App {
     //Renders the mixer (right panel)
     fn render_mixer(&self, area: Rect, buf: &mut Buffer) {
         Canvas::default()
-    .block(Block::bordered().title("Canvas"))
+    .block(Block::new())
     .x_bounds([-180.0, 180.0])
     .y_bounds([-90.0, 90.0])
     //.marker(Marker::Dot)
+    .background_color(Color::Black)
     .paint(|ctx| {
         ctx.draw(&Circle {
             x: 0.0,
             y: 0.0,
             radius: self.get_radius(),
-            color: Color::Red,
+            color: TEAL.c400,
         });
     }).render(area,buf);
     }

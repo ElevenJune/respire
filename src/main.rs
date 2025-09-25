@@ -4,6 +4,7 @@ use color_eyre::Result;
 mod app;
 mod ui;
 mod breath_cycle;
+mod breath_manager;
 
 
 fn main() -> Result<()> {
