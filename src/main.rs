@@ -5,6 +5,7 @@ mod app;
 mod ui;
 mod breath_cycle;
 mod breath_manager;
+mod sink_handle;
 
 
 fn main() -> Result<()> {

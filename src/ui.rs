@@ -1,5 +1,6 @@
 //use color_eyre::owo_colors::OwoColorize;
 use crate::App;
+use crate::{breath_cycle::{BreathCycle, CycleState}};
 use ratatui::{
     buffer::Buffer,
     layout::{self, Constraint, Layout, Rect},
@@ -8,11 +9,9 @@ use ratatui::{
         Color, Modifier, Style, Stylize,
     },
     symbols::{self, Marker},
-    text::Line,
+    text::{Line, Text},
     widgets::{
-        Block, Borders, Gauge, HighlightSpacing, List, ListItem, Paragraph, StatefulWidget, Tabs,
-        Widget, Wrap,
-        canvas::{Canvas, Circle, Map, MapResolution, Points, Rectangle, Line as DrawLine},
+        canvas::{Canvas, Circle, Line as DrawLine, Map, MapResolution, Points, Rectangle}, Block, Borders, Gauge, HighlightSpacing, List, ListItem, Paragraph, StatefulWidget, Tabs, Widget, Wrap
     },
 };
 use std::{fmt::format, sync::Arc};
@@ -87,6 +86,18 @@ impl App {
             radius: self.get_radius(),
             color: TEAL.c400,
         });
+        if self.is_break() {
+            ctx.print(-5.0,0.0, "Hold".yellow());
+            ctx.print(-5.0,-10.0, format!("{}", (self.current_cycle_duration()-self.get_duration())/1000+1).yellow());
+        }
+
+        if let Some(current_cycle) = self.get_current_cycle().cloned(){
+            ctx.print(-180.0,-90.0, format!("Inhale:{}, Hold1:{}, Exhale:{}, Hold2:{}",
+            current_cycle.inhale_duration(),
+            current_cycle.break1_duration(),
+            current_cycle.exhale_duration(),
+            current_cycle.break2_duration()));
+        }
     }).render(area,buf);
     }
 }
