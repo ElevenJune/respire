@@ -7,6 +7,7 @@ pub struct BreathCycle{
 }
 
 #[derive(Clone,Copy,PartialEq)]
+#[repr(usize)] 
 pub enum CycleState {
     Inhale,
     Break1,
@@ -34,6 +35,16 @@ impl CycleState{
             CycleState::Break2 => CycleState::Inhale,
             CycleState::None => CycleState::None
         };
+    }
+
+    pub fn to_string(&self) -> &str{
+        match self {
+            CycleState::Inhale => "Inhale",
+            CycleState::Break1 => "Hold1",
+            CycleState::Exhale => "Exhale",
+            CycleState::Break2 => "Hold2",
+            CycleState::None => ""
+        }
     }
 
     pub fn is_break(&self)->bool{
@@ -65,6 +76,19 @@ impl BreathCycle{
     }
     pub fn set_break2_duration(&mut self, duration : u16){
         self.break2_duration = duration;
+    }
+    pub fn set_state_duration(&mut self, cycle_state: &CycleState, duration : u16){
+        match cycle_state {
+            CycleState::Inhale => self.set_inhale_duration(duration),
+            CycleState::Break1 => self.set_break1_duration(duration),
+            CycleState::Exhale => self.set_exhale_duration(duration),
+            CycleState::Break2 => self.set_break2_duration(duration),
+            CycleState::None => {},
+        }
+    }
+    pub fn increment_state_duration(&mut self, cycle_state: &CycleState, step : u16){
+        let current_duration = self.get_state_duration(cycle_state);
+        self.set_state_duration(cycle_state, current_duration+step);
     }
     
     //Getters

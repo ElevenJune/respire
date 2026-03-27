@@ -1,20 +1,19 @@
 //use color_eyre::owo_colors::OwoColorize;
-use crate::App;
-use crate::{breath_cycle::{BreathCycle, CycleState}};
+use crate::{App, breath_cycle::CycleState};
+//use crate::{breath_cycle::{BreathCycle, CycleState}};
 use ratatui::{
     buffer::Buffer,
     layout::{self, Constraint, Layout, Rect},
     style::{
-        palette::tailwind::{AMBER, TEAL},
-        Color, Modifier, Style, Stylize,
+        Color, Modifier, Style, Stylize, palette::tailwind::{AMBER, TEAL}
     },
-    symbols::{self, Marker},
-    text::{Line, Text},
+    symbols::{self, Marker, line},
+    text::{Line, Text, Span},
     widgets::{
-        canvas::{Canvas, Circle, Line as DrawLine, Map, MapResolution, Points, Rectangle}, Block, Borders, Gauge, HighlightSpacing, List, ListItem, Paragraph, StatefulWidget, Tabs, Widget, Wrap
+        Block, Borders, Gauge, HighlightSpacing, List, ListItem, Paragraph, StatefulWidget, Tabs, Widget, Wrap, canvas::{Canvas, Circle, Line as DrawLine, Map, MapResolution, Points, Rectangle}
     },
 };
-use std::{fmt::format, sync::Arc};
+use std::{fmt::format, io::empty, sync::Arc};
 //use cli_log::*;
 
 const LIGHT_COLOR: Color = TEAL.c100;
@@ -41,7 +40,7 @@ impl App {
     fn render_header(&self, area: Rect, buf: &mut Buffer) {
         let bg = TEAL.c500;
         let text = format!(
-            "SerenIT\n{}\n{}",
+            "Respire\n{}\n{}",
             self.get_duration(),
             self.get_tick()
         );
@@ -57,17 +56,53 @@ impl App {
 
     /// Renders footer
     fn render_footer(&self, area: Rect, buf: &mut Buffer) {
+
+        let [cycle_data, footer] = Layout::vertical([
+            Constraint::Length(1),
+            Constraint::Length(area.height-1),
+        ])
+        .areas(area);
+
+        //Cycle data
+        let bg_style = if self.get_selected_cycle_state()!=CycleState::None {FOCUS_COLOR} else {FOCUS_UNSELECTED_COLOR};
+        Paragraph::new(self.render_cycle_data())
+            .centered()
+            .bg(bg_style)
+            .fg(LIGHT_COLOR)
+            .render(cycle_data, buf);
+
+        //Controls
         let text = 
-            " Tab : switch between sound/scenes, 's' : save, 'q' : quit, 'm' : switch to mixer\n \
+            " Tab : switch between breath cycle, 's' : save, 'q' : quit\n \
             ←→ : select category, ctrl & ←→ : adjust the master volume\n \
             Enter : add/remove the selected sound, Space : pause/play, 'n' : create scene";
-
         Paragraph::new(text)
             .left_aligned()
             .bg(FOCUS_UNSELECTED_COLOR)
             .fg(YELLOW)
-            .bold()
-            .render(area, buf);
+            .render(footer, buf);
+    }
+
+    //Renders duration of each state of the selected BreathCycle
+    fn render_cycle_data(&self) -> Line {
+        let current_cycle = self.get_current_cycle().cloned().unwrap();
+        let selected_state = self.get_selected_cycle_state();
+        let default_style = Style::default();
+        let bold_style = default_style.bold().red();
+
+        let states = [CycleState::Inhale,CycleState::Break1, CycleState::Exhale, CycleState::Break2];
+        let spans = states
+        .iter()
+        .enumerate()
+        .map(|(index, state)|{
+            let style = if *state == selected_state { bold_style } else { default_style };
+            let separator = if index!= states.len()-1 {" , "} else {""};
+            Span::styled(
+                format!("{}:{}{}",state.to_string(),current_cycle.get_state_duration(&state),separator),
+                style)
+        }).collect::<Vec<Span>>();
+
+        Line::from(spans)
     }
 
 
@@ -90,14 +125,6 @@ impl App {
             ctx.print(-5.0,0.0, "Hold".yellow());
             ctx.print(-5.0,-10.0, format!("{}", (self.current_cycle_duration()-self.get_duration())/1000+1).yellow());
         }
-
-        if let Some(current_cycle) = self.get_current_cycle().cloned(){
-            ctx.print(-180.0,-90.0, format!("Inhale:{}, Hold1:{}, Exhale:{}, Hold2:{}",
-            current_cycle.inhale_duration(),
-            current_cycle.break1_duration(),
-            current_cycle.exhale_duration(),
-            current_cycle.break2_duration()));
-        }
     }).render(area,buf);
     }
 }
@@ -105,7 +132,7 @@ impl App {
 //Renders whole app
 impl Widget for &mut App {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let footer_length = if true { 3 } else { 2 };
+        let footer_length = if true { 4 } else { 2 };
         let [header_area, main_area, footer_area] = Layout::vertical([
             Constraint::Length(3),
             Constraint::Fill(1),

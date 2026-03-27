@@ -20,9 +20,12 @@ pub struct App {
     exit: bool,
     //Circle
     radius: f64,
+    //Backend
     manager : BreathManager,
+    //App data
     tick_count: u64,
-    tick_rate: u16
+    tick_rate: u16,
+    selected_cycle_state:CycleState
 }
 
 impl App {
@@ -54,7 +57,8 @@ impl App {
             radius: 20.0,
             manager : BreathManager::new(),
             tick_count:0,
-            tick_rate:20
+            tick_rate:20,
+            selected_cycle_state:CycleState::None
         };
         app
     }
@@ -65,6 +69,7 @@ impl App {
     pub fn get_duration(&self) -> u16 {self.manager.current_duration()}
     pub fn get_tick(&self) -> u64 {self.tick_count}
     pub fn is_break(&self) -> bool {self.manager.current_cycle_state().is_break()}
+    pub fn get_selected_cycle_state(&self) -> CycleState {self.selected_cycle_state}
     pub fn current_cycle_duration(&self) -> u16 {
         let current_cycle = self.manager.current_cycle();
         if let Some(cycle) = current_cycle {
@@ -92,6 +97,10 @@ impl App {
             KeyCode::Char('c') => self.switch_cycle(true),
             KeyCode::Char('x') => self.switch_cycle(false),
             KeyCode::Char('s') => self.manager.toggle_sound_enabled(),
+            KeyCode::Char('i') => self.switch_selected_state(),
+            KeyCode::Char('e') => self.switch_edit_mode(),
+            KeyCode::Char('o') => self.increment_state_duration(500),
+            KeyCode::Char('p') => self.increment_state_duration(0),
             _ => {}
         }
     }
@@ -136,6 +145,20 @@ impl App {
                 self.manager.set_current_cycle_index(new_index);
             }
         }
+    }
+
+    fn switch_edit_mode(&mut self){
+        self.selected_cycle_state=if self.selected_cycle_state!=CycleState::None
+        {CycleState::None}
+        else {CycleState::Inhale};
+    }
+
+    fn switch_selected_state(&mut self){
+        self.selected_cycle_state.roll();
+    }
+
+    fn increment_state_duration(&mut self, step:u16){
+        self.manager.increment_current_cycle_state_duration(&self.selected_cycle_state, step);
     }
 
     fn ease_in_out_squad(&self, x: f64) -> f64 {
