@@ -25,7 +25,8 @@ pub struct App {
     //App data
     tick_count: u64,
     tick_rate: u16,
-    selected_cycle_state:CycleState
+    selected_cycle_state:CycleState,
+    paused:bool
 }
 
 impl App {
@@ -42,7 +43,7 @@ impl App {
                 };
             }
 
-            if last_tick.elapsed() >= tick_rate {
+            if last_tick.elapsed() >= tick_rate && !self.paused {
                 self.on_tick();
                 self.manager.update_cycle(self.tick_rate);
                 last_tick = Instant::now();
@@ -58,7 +59,8 @@ impl App {
             manager : BreathManager::new(),
             tick_count:0,
             tick_rate:20,
-            selected_cycle_state:CycleState::None
+            selected_cycle_state:CycleState::None,
+            paused:true
         };
         app
     }
@@ -92,22 +94,20 @@ impl App {
         let _ctrl_pressed = key.modifiers.contains(KeyModifiers::CONTROL);
         match key.code {
             KeyCode::Char('q') => self.exit = true,
-            KeyCode::Char('k') | KeyCode::Up => self.increment_radius(false, 1.0),
-            KeyCode::Char('G') | KeyCode::Down => self.increment_radius(true, 1.0),
+            KeyCode::Char('a') | KeyCode::Up => self.increment_state_duration(500),
+            KeyCode::Char('z') | KeyCode::Down => self.increment_state_duration(-500),
             KeyCode::Char('c') => self.switch_cycle(true),
             KeyCode::Char('x') => self.switch_cycle(false),
             KeyCode::Char('s') => self.manager.toggle_sound_enabled(),
-            KeyCode::Char('i') => self.switch_selected_state(),
+            KeyCode::Tab => self.switch_selected_state(),
             KeyCode::Char('e') => self.switch_edit_mode(),
-            KeyCode::Char('o') => self.increment_state_duration(500),
-            KeyCode::Char('p') => self.increment_state_duration(0),
             _ => {}
         }
     }
 
     fn on_tick(& mut self) {
         self.tick_count+=1;
-
+        
         let current_cycle = self.manager.current_cycle();
 
         if let Some(cycle) = current_cycle {
@@ -148,16 +148,20 @@ impl App {
     }
 
     fn switch_edit_mode(&mut self){
-        self.selected_cycle_state=if self.selected_cycle_state!=CycleState::None
-        {CycleState::None}
-        else {CycleState::Inhale};
+        let was_editing = self.selected_cycle_state!=CycleState::None;
+        self.selected_cycle_state=if was_editing {CycleState::None} else {CycleState::Inhale};
+        self.paused = !was_editing;
+        if self.paused {
+            self.manager.reset_cycle_state();
+            self.on_tick();
+        }
     }
 
     fn switch_selected_state(&mut self){
         self.selected_cycle_state.roll();
     }
 
-    fn increment_state_duration(&mut self, step:u16){
+    fn increment_state_duration(&mut self, step:i16){
         self.manager.increment_current_cycle_state_duration(&self.selected_cycle_state, step);
     }
 

@@ -86,9 +86,9 @@ impl BreathCycle{
             CycleState::None => {},
         }
     }
-    pub fn increment_state_duration(&mut self, cycle_state: &CycleState, step : u16){
+    pub fn increment_state_duration(&mut self, cycle_state: &CycleState, step : i16){
         let current_duration = self.get_state_duration(cycle_state);
-        self.set_state_duration(cycle_state, current_duration+step);
+        self.set_state_duration(cycle_state, current_duration.saturating_add_signed(step));
     }
     
     //Getters

@@ -51,12 +51,12 @@ impl BreathManager{
     }
 
     //Setters
-    pub fn increment_current_cycle_state_duration(&mut self, cycle_state: &CycleState, step: u16){
+    pub fn increment_current_cycle_state_duration(&mut self, cycle_state: &CycleState, step: i16){
         if let Some(index) = &self.current_cycle_index {
             self.increment_cycle_state_duration(*index, cycle_state, step);
         }
     }
-    pub fn increment_cycle_state_duration(&mut self, cycle_index:usize, cycle_state: &CycleState, step: u16){
+    pub fn increment_cycle_state_duration(&mut self, cycle_index:usize, cycle_state: &CycleState, step: i16){
         let selected_cycle : Option<&mut BreathCycle> = self.cycles.get_mut(cycle_index);
         if let Some(cycle) = selected_cycle{
             cycle.increment_state_duration(cycle_state, step);
@@ -67,6 +67,11 @@ impl BreathManager{
     pub fn set_current_cycle_index(&mut self, index: usize){
         if index >= self.cycles.len() {self.current_cycle_index=None;}
         else {self.current_cycle_index=Some(index);}
+        self.reset_cycle_state();
+        
+    }
+
+    pub fn reset_cycle_state(&mut self){
         self.current_cycle_state=CycleState::Inhale;
         self.current_duration=0;
 
