@@ -8,6 +8,7 @@ pub struct BreathManager{
     current_duration : u16,
 
     sound_enabled : bool,
+    play_sound_next : bool,
     sound_inhale : SinkHandle,
     sound_exhale : SinkHandle,
     sound_hold : SinkHandle
@@ -21,6 +22,7 @@ impl BreathManager{
             current_cycle_state : CycleState::Inhale,
             current_duration : 0,
             sound_enabled : false,
+            play_sound_next : true,
             sound_inhale : SinkHandle::new(),
             sound_exhale : SinkHandle::new(),
             sound_hold : SinkHandle::new(),
@@ -29,7 +31,7 @@ impl BreathManager{
         bm.populate();
         bm.set_sounds();
 
-        if bm.cycles.len() > 0 {
+        if !bm.cycles.is_empty() {
             bm.current_cycle_index = Some(0);
         }
 
@@ -37,10 +39,11 @@ impl BreathManager{
     }
 
     //Getters
-    pub fn _cycles(&self) -> &Vec<BreathCycle> {&self.cycles}
     pub fn current_cycle_state(&self) -> CycleState {self.current_cycle_state}
     pub fn current_duration(&self) -> u16 {self.current_duration}
     pub fn current_cycle_index(&self) -> Option<usize> {self.current_cycle_index}
+    #[allow(dead_code)]
+    pub fn cycles(&self) -> &Vec<BreathCycle> {&self.cycles}
 
     pub fn current_cycle(&self) -> Option<&BreathCycle> {
         if let Some(index) = self.current_cycle_index {
@@ -86,20 +89,22 @@ impl BreathManager{
     }
 
     pub fn update_cycle(&mut self, millis_spent: u16) {
-        if let Some(current_cycle) = self.current_cycle().cloned() {
+        if let Some(current_cycle) = self.current_cycle().copied() {
+            if !current_cycle.is_valid() {return;}
             let current_state_duration = current_cycle.get_state_duration(&self.current_cycle_state);
 
             //Start cycle behaviour
             if self.sound_enabled 
-            && self.current_duration == 0
+            && self.play_sound_next
             && current_state_duration>=1000{
                 match self.current_cycle_state {
                     CycleState::Inhale => self.sound_inhale.play_once(),
                     CycleState::Exhale => self.sound_exhale.play_once(),
                     _ => {self.sound_hold.play_once()}
                 }
+                self.play_sound_next = false;
             }
-            self.current_duration+=millis_spent;
+            self.current_duration=self.current_duration.saturating_add(millis_spent);
 
             //End cycle behaviour
             if self.current_duration>current_state_duration {
@@ -109,17 +114,19 @@ impl BreathManager{
                     next_state.roll();
                 }
                 self.current_cycle_state=next_state;
-                self.current_duration=0;
+                self.play_sound_next = true;
+                self.current_duration=self.current_duration.saturating_sub(current_state_duration);
             }
         }
     }
 
     //Private
     fn populate(&mut self) {
-        self.cycles.push(BreathCycle::new(4000, 0, 4000, 0));
-        self.cycles.push(BreathCycle::new(1000, 1000, 1000, 1000));
-        self.cycles.push(BreathCycle::new(6000, 0, 6000, 0));
-        self.cycles.push(BreathCycle::new(4000, 4000, 4000, 4000));
+        self.cycles.push(BreathCycle::new(5000, 0, 5000, 0, "Cohérence cardiaque"));
+        self.cycles.push(BreathCycle::new(1000, 1000, 1000, 1000, "Custom"));
+        self.cycles.push(BreathCycle::new(4000, 0, 6000, 0, "Longue expiration"));
+        self.cycles.push(BreathCycle::new(4000, 4000, 4000, 4000, "Respiration Carée"));
+        self.cycles.push(BreathCycle::new(4000, 7000, 8000, 0, "Respiration Triangualire"));
     }
 
     fn set_sounds(&mut self){

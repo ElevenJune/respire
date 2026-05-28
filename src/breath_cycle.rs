@@ -3,7 +3,8 @@ pub struct BreathCycle{
     inhale_duration : u16,
     break1_duration : u16,
     exhale_duration : u16,
-    break2_duration : u16
+    break2_duration : u16,
+    name : &'static str
 }
 
 #[derive(Clone,Copy,PartialEq)]
@@ -53,13 +54,13 @@ impl CycleState{
 }
 
 impl BreathCycle{
-    pub fn new(inhale_duration : u16, break1_duration : u16, exhale_duration : u16, break2_duration : u16) -> Self{
+    pub fn new(inhale_duration : u16, break1_duration : u16, exhale_duration : u16, break2_duration : u16, name:&'static str) -> Self{
         BreathCycle{
             inhale_duration,
             break1_duration,
             exhale_duration,
-            break2_duration
-            //details : format!("{}-{}-{}-{}",inhale_duration,break1_duration,exhale_duration,break2_duration)
+            break2_duration,
+            name
         }
     }
 
@@ -95,10 +96,9 @@ impl BreathCycle{
     pub fn total_cycle_duration(&self) -> u16{
         self.inhale_duration + self.break1_duration + self.exhale_duration + self.break2_duration
     }
-    pub fn to_str(&self) -> &str{
-        //&self.details
-        "t"
-    }
+    pub fn is_valid(&self) -> bool{self.total_cycle_duration()>0}
+
+    pub fn name(&self) -> &str{&self.name}
     pub fn inhale_duration(&self) -> u16 {self.inhale_duration}
     pub fn break1_duration(&self) -> u16 {self.break1_duration}
     pub fn exhale_duration(&self) -> u16 {self.exhale_duration}

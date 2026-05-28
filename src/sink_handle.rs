@@ -1,7 +1,5 @@
 use rodio::source::Source;
 use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink};
-use rodio::source::{SineWave};
-use std::time::Duration;
 use std::io::Cursor;
 use std::fs::File;
 use std::io::BufReader;
@@ -32,6 +30,7 @@ impl SinkHandle {
         }
     }
 
+    #[allow(dead_code)]
     pub fn is_playing(&self) -> bool {
         self.sink.len()!=0
     }
@@ -80,6 +79,7 @@ impl SinkHandle {
         self.sink.clear();
     }
 
+    #[allow(dead_code)]
     fn clear_if_playing(&mut self) {
         if self.is_playing() {
             self.stop();

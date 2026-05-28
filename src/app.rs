@@ -44,8 +44,9 @@ impl App {
             }
 
             if last_tick.elapsed() >= tick_rate && !self.paused {
+                let elapsed = last_tick.elapsed().as_millis() as u16;
                 self.on_tick();
-                self.manager.update_cycle(self.tick_rate);
+                self.manager.update_cycle(elapsed);
                 last_tick = Instant::now();
             }
         }
@@ -60,7 +61,7 @@ impl App {
             tick_count:0,
             tick_rate:20,
             selected_cycle_state:CycleState::None,
-            paused:true
+            paused:false
         };
         app
     }
@@ -68,6 +69,7 @@ impl App {
     //----Getters
 
     pub fn get_radius(&self) -> f64 {self.radius}
+    pub fn is_edit_mode(&self) -> bool {self.selected_cycle_state!=CycleState::None}
     pub fn get_duration(&self) -> u16 {self.manager.current_duration()}
     pub fn get_tick(&self) -> u64 {self.tick_count}
     pub fn is_break(&self) -> bool {self.manager.current_cycle_state().is_break()}
@@ -96,10 +98,15 @@ impl App {
             KeyCode::Char('q') => self.exit = true,
             KeyCode::Char('a') | KeyCode::Up => self.increment_state_duration(500),
             KeyCode::Char('z') | KeyCode::Down => self.increment_state_duration(-500),
-            KeyCode::Char('c') => self.switch_cycle(true),
-            KeyCode::Char('x') => self.switch_cycle(false),
+            KeyCode::Char('c') | KeyCode::Right => {
+                if self.is_edit_mode(){
+                    self.switch_selected_state()
+                } else {
+                self.switch_cycle(true)
+                }}
+            KeyCode::Char('x') | KeyCode::Left => self.switch_cycle(false),
             KeyCode::Char('s') => self.manager.toggle_sound_enabled(),
-            KeyCode::Tab => self.switch_selected_state(),
+            KeyCode::Tab => if self.is_edit_mode() {self.switch_selected_state()},
             KeyCode::Char('e') => self.switch_edit_mode(),
             _ => {}
         }
@@ -127,6 +134,7 @@ impl App {
         }
     }
 
+    #[allow(dead_code)]
     fn increment_radius(&mut self, down: bool, step : f64) {
         if down && self.radius>0.0 {
             self.radius-=step;
@@ -136,12 +144,13 @@ impl App {
     }
 
     fn switch_cycle(&mut self, up: bool){
+        if self.is_edit_mode() {return;}
         match self.manager.current_cycle_index() {
             None => {
                 self.manager.set_current_cycle_index(0);
             },
             Some(i) => {
-                let new_index = if up {i+1} else {i-1};
+                let new_index = if up {i+1} else {i.saturating_add_signed(-1)};
                 self.manager.set_current_cycle_index(new_index);
             }
         }
