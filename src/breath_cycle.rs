@@ -7,7 +7,7 @@ pub struct BreathCycle{
     name : &'static str
 }
 
-#[derive(Clone,Copy,PartialEq)]
+#[derive(Clone,Copy,PartialEq,Debug)]
 #[repr(usize)] 
 pub enum CycleState {
     Inhale,
@@ -112,4 +112,59 @@ impl BreathCycle{
             CycleState::None => 0,
         }
     }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn roll_correct(){
+        let mut cycle_state = CycleState::Inhale;
+        assert_eq!(cycle_state.is_break(),false);
+
+        cycle_state.roll();
+        assert_eq!(cycle_state,CycleState::Break1);
+        assert_eq!(cycle_state.is_break(),true);
+
+        cycle_state.roll();
+        assert_eq!(cycle_state,CycleState::Exhale);
+        assert_eq!(cycle_state.is_break(),false);
+
+        cycle_state.roll();
+        assert_eq!(cycle_state,CycleState::Break2);
+        assert_eq!(cycle_state.is_break(),true);
+    }
+
+    #[test]
+    fn total_duration_ok(){
+        let cycle = BreathCycle::new(1000,500,1000,200,"Test");
+        assert_eq!(cycle.total_cycle_duration(),2700);
+    }
+
+    #[test]
+    fn valid_ok(){
+        let mut cycle = BreathCycle::new(100,0,0,0,"Test");
+        assert_eq!(cycle.is_valid(),true);
+        cycle.set_inhale_duration(0);
+        assert_eq!(cycle.is_valid(),false);
+    }
+
+    #[test]
+    fn increment_ok(){
+        let mut cycle = BreathCycle::new(1000,500,1000,200,"Test");
+        let cycle_inital_duration = cycle.total_cycle_duration();
+
+        cycle.increment_state_duration(&CycleState::Break1, -200);
+        cycle.increment_state_duration(&CycleState::Break2, 200);
+        assert_eq!(cycle.get_state_duration(&CycleState::Break1), 300);
+        assert_eq!(cycle.get_state_duration(&CycleState::Break2), 400);
+        assert_eq!(cycle.total_cycle_duration(),cycle_inital_duration);
+
+        cycle.increment_state_duration(&CycleState::Inhale, 2000);
+        assert_eq!(cycle.inhale_duration(),3000);
+        cycle.increment_state_duration(&CycleState::Inhale, -500);
+        assert_eq!(cycle.inhale_duration(),2500);
+        assert_eq!(cycle.total_cycle_duration(),cycle_inital_duration+1500);
+    }
+
 }

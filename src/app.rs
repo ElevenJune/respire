@@ -98,15 +98,10 @@ impl App {
             KeyCode::Char('q') => self.exit = true,
             KeyCode::Char('a') | KeyCode::Up => self.increment_state_duration(500),
             KeyCode::Char('z') | KeyCode::Down => self.increment_state_duration(-500),
-            KeyCode::Char('c') | KeyCode::Right => {
-                if self.is_edit_mode(){
-                    self.switch_selected_state()
-                } else {
-                self.switch_cycle(true)
-                }}
-            KeyCode::Char('x') | KeyCode::Left => self.switch_cycle(false),
+            KeyCode::Char('c') | KeyCode::Right => self.select_next(false),
+            KeyCode::Char('x') | KeyCode::Left => self.select_next(true),
             KeyCode::Char('s') => self.manager.toggle_sound_enabled(),
-            KeyCode::Tab => if self.is_edit_mode() {self.switch_selected_state()},
+            KeyCode::Tab => if self.is_edit_mode() {self.switch_selected_state(false)},
             KeyCode::Char('e') => self.switch_edit_mode(),
             _ => {}
         }
@@ -156,18 +151,28 @@ impl App {
         }
     }
 
-    fn switch_edit_mode(&mut self){
-        let was_editing = self.selected_cycle_state!=CycleState::None;
-        self.selected_cycle_state=if was_editing {CycleState::None} else {CycleState::Inhale};
-        self.paused = !was_editing;
-        if self.paused {
-            self.manager.reset_cycle_state();
-            self.on_tick();
+    fn select_next(&mut self, left: bool){
+        if self.is_edit_mode(){
+            self.switch_selected_state(left)
+        } else {
+            self.switch_cycle(!left)
         }
     }
 
-    fn switch_selected_state(&mut self){
-        self.selected_cycle_state.roll();
+    fn switch_edit_mode(&mut self){
+        let was_editing = self.is_edit_mode();
+        self.selected_cycle_state=if was_editing {CycleState::None} else {CycleState::Inhale};
+        self.paused = !was_editing;
+        self.manager.reset_cycle_state();
+        self.on_tick();
+    }
+
+    fn switch_selected_state(&mut self, left: bool){
+        if !left {
+            self.selected_cycle_state.roll();
+        }else{
+            for _i in 0..3 {self.selected_cycle_state.roll();}
+        }
     }
 
     fn increment_state_duration(&mut self, step:i16){

@@ -138,4 +138,63 @@ impl BreathManager{
         self.sound_hold.set_volume(0.5);
     }
 
+    fn _push_cycle(&mut self, bc : &BreathCycle){
+        self.cycles.push(*bc);
+    }
+
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn select_ok(){
+        let mut bm = BreathManager::new();
+        if bm.cycles().len() == 0 {return;}
+
+        bm.set_current_cycle_index(usize::MAX);
+        assert_eq!(bm.current_cycle().is_none(),true);
+        bm.set_current_cycle_index(0);
+        assert_eq!(bm.current_cycle().is_some(),true);
+
+        let cycle = bm.current_cycle().unwrap();
+        assert_eq!(cycle.inhale_duration(),5000);
+        assert_eq!(cycle.exhale_duration(),5000);
+    }
+
+    #[test]
+    fn run_ok(){
+        let mut bm = BreathManager::new();
+        let test_cycle = BreathCycle::new(5000,0,5000,0,"Test");
+        bm._push_cycle(&test_cycle);
+        bm.set_current_cycle_index(bm.cycles().len()-1);
+        let inhale_d = test_cycle.inhale_duration();
+
+        assert_eq!(bm.current_cycle_state(),CycleState::Inhale);
+        assert_eq!(test_cycle.inhale_duration(),5000);
+        assert_eq!(test_cycle.exhale_duration(),5000);
+        assert_eq!(test_cycle.break1_duration(),0);
+        assert_eq!(test_cycle.break2_duration(),0);
+        bm.update_cycle(inhale_d+100);
+        assert_eq!(bm.current_cycle_state(),CycleState::Exhale);
+        bm.update_cycle(inhale_d+100);
+        assert_eq!(bm.current_cycle_state(),CycleState::Inhale);
+    }
+
+    #[test]
+    fn test_increment(){
+        let mut bm = BreathManager::new();
+        let test_cycle = BreathCycle::new(5000,0,5000,0,"Test");
+        bm._push_cycle(&test_cycle);
+        bm.set_current_cycle_index(bm.cycles().len()-1);
+        bm.increment_current_cycle_state_duration(&CycleState::Break1, 777);
+        bm.increment_current_cycle_state_duration(&CycleState::Break2, 1000);
+        bm.increment_current_cycle_state_duration(&CycleState::Break2, -500);
+        if let Some(cycle) = bm.current_cycle() {
+            assert_eq!(cycle.break1_duration(),777);
+            assert_eq!(cycle.break2_duration(),500);
+        }
+    }
+
 }

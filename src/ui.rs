@@ -68,7 +68,7 @@ impl App {
         let bg = if !self.is_edit_mode() {FOCUS_UNSELECTED_COLOR} else {PAUSED_COLOR};
         //Controls
         let normal_text = 
-            " 's' : Toggle sound, 'q' : quit, Space : pause/play\n \
+            " 's' : Toggle sound, 'q' : quit, Space : pause/play, 'e' : Edit cycle\n \
             ←→ : select breath cycle, up/down : adjust step duration";
         let edit_text = 
             " [EDIT MODE ENABLED] 'e' : exit edit mode, 'q' : quit\n \
@@ -139,7 +139,10 @@ impl App {
         });
         if self.is_break() {
             ctx.print(-5.0,0.0, "Hold".yellow());
-            ctx.print(-5.0,-10.0, format!("{}", (self.current_cycle_duration()-self.get_duration())/1000+1).yellow());
+            let duration = if self.current_cycle_duration() > self.get_duration() {
+                (self.current_cycle_duration()-self.get_duration())/1000+1
+            }else {0};
+            ctx.print(-5.0,-10.0, format!("{}", duration).yellow());
         }
     }).render(area,buf);
     }
