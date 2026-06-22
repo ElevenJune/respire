@@ -68,7 +68,7 @@ impl App {
         let bg = if !self.is_edit_mode() {FOCUS_UNSELECTED_COLOR} else {PAUSED_COLOR};
         //Controls
         let normal_text = 
-            " 's' : Toggle sound, 'q' : quit, Space : pause/play, 'e' : Edit cycle\n \
+            " 's' : Toggle sound, 'q' : quit, 'e' : Edit cycle\n \
             ←→ : select breath cycle, up/down : adjust step duration";
         let edit_text = 
             " [EDIT MODE ENABLED] 'e' : exit edit mode, 'q' : quit\n \
