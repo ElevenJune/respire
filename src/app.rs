@@ -20,9 +20,13 @@ pub struct App {
     exit: bool,
     //Circle
     radius: f64,
+    //Backend
     manager : BreathManager,
+    //App data
     tick_count: u64,
-    tick_rate: u16
+    tick_rate: u16,
+    selected_cycle_state:CycleState,
+    paused:bool
 }
 
 impl App {
@@ -39,9 +43,10 @@ impl App {
                 };
             }
 
-            if last_tick.elapsed() >= tick_rate {
+            if last_tick.elapsed() >= tick_rate && !self.paused {
+                let elapsed = last_tick.elapsed().as_millis() as u16;
                 self.on_tick();
-                self.manager.update_cycle(self.tick_rate);
+                self.manager.update_cycle(elapsed);
                 last_tick = Instant::now();
             }
         }
@@ -54,7 +59,9 @@ impl App {
             radius: 20.0,
             manager : BreathManager::new(),
             tick_count:0,
-            tick_rate:20
+            tick_rate:20,
+            selected_cycle_state:CycleState::None,
+            paused:false
         };
         app
     }
@@ -62,9 +69,11 @@ impl App {
     //----Getters
 
     pub fn get_radius(&self) -> f64 {self.radius}
+    pub fn is_edit_mode(&self) -> bool {self.selected_cycle_state!=CycleState::None}
     pub fn get_duration(&self) -> u16 {self.manager.current_duration()}
     pub fn get_tick(&self) -> u64 {self.tick_count}
     pub fn is_break(&self) -> bool {self.manager.current_cycle_state().is_break()}
+    pub fn get_selected_cycle_state(&self) -> CycleState {self.selected_cycle_state}
     pub fn current_cycle_duration(&self) -> u16 {
         let current_cycle = self.manager.current_cycle();
         if let Some(cycle) = current_cycle {
@@ -87,18 +96,20 @@ impl App {
         let _ctrl_pressed = key.modifiers.contains(KeyModifiers::CONTROL);
         match key.code {
             KeyCode::Char('q') => self.exit = true,
-            KeyCode::Char('k') | KeyCode::Up => self.increment_radius(false, 1.0),
-            KeyCode::Char('G') | KeyCode::Down => self.increment_radius(true, 1.0),
-            KeyCode::Char('c') => self.switch_cycle(true),
-            KeyCode::Char('x') => self.switch_cycle(false),
+            KeyCode::Char('a') | KeyCode::Up => self.increment_state_duration(500),
+            KeyCode::Char('z') | KeyCode::Down => self.increment_state_duration(-500),
+            KeyCode::Char('c') | KeyCode::Right => self.select_next(false),
+            KeyCode::Char('x') | KeyCode::Left => self.select_next(true),
             KeyCode::Char('s') => self.manager.toggle_sound_enabled(),
+            KeyCode::Tab => if self.is_edit_mode() {self.switch_selected_state(false)},
+            KeyCode::Char('e') => self.switch_edit_mode(),
             _ => {}
         }
     }
 
     fn on_tick(& mut self) {
         self.tick_count+=1;
-
+        
         let current_cycle = self.manager.current_cycle();
 
         if let Some(cycle) = current_cycle {
@@ -118,6 +129,7 @@ impl App {
         }
     }
 
+    #[allow(dead_code)]
     fn increment_radius(&mut self, down: bool, step : f64) {
         if down && self.radius>0.0 {
             self.radius-=step;
@@ -127,15 +139,44 @@ impl App {
     }
 
     fn switch_cycle(&mut self, up: bool){
+        if self.is_edit_mode() {return;}
         match self.manager.current_cycle_index() {
             None => {
                 self.manager.set_current_cycle_index(0);
             },
             Some(i) => {
-                let new_index = if up {i+1} else {i-1};
+                let new_index = if up {i+1} else {i.saturating_add_signed(-1)};
                 self.manager.set_current_cycle_index(new_index);
             }
         }
+    }
+
+    fn select_next(&mut self, left: bool){
+        if self.is_edit_mode(){
+            self.switch_selected_state(left)
+        } else {
+            self.switch_cycle(!left)
+        }
+    }
+
+    fn switch_edit_mode(&mut self){
+        let was_editing = self.is_edit_mode();
+        self.selected_cycle_state=if was_editing {CycleState::None} else {CycleState::Inhale};
+        self.paused = !was_editing;
+        self.manager.reset_cycle_state();
+        self.on_tick();
+    }
+
+    fn switch_selected_state(&mut self, left: bool){
+        if !left {
+            self.selected_cycle_state.roll();
+        }else{
+            for _i in 0..3 {self.selected_cycle_state.roll();}
+        }
+    }
+
+    fn increment_state_duration(&mut self, step:i16){
+        self.manager.increment_current_cycle_state_duration(&self.selected_cycle_state, step);
     }
 
     fn ease_in_out_squad(&self, x: f64) -> f64 {
