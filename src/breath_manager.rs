@@ -122,11 +122,11 @@ impl BreathManager{
 
     //Private
     fn populate(&mut self) {
-        self.cycles.push(BreathCycle::new(5000, 0, 5000, 0, "Cohérence cardiaque"));
+        self.cycles.push(BreathCycle::new(5000, 0, 5000, 0, "Cardiac Coherence"));
+        self.cycles.push(BreathCycle::new(4000, 0, 6000, 0, "Long Exhalation"));
+        self.cycles.push(BreathCycle::new(4000, 4000, 4000, 4000, "Squared Breathing"));
+        self.cycles.push(BreathCycle::new(4000, 7000, 8000, 0, "Triangular Breathing"));
         self.cycles.push(BreathCycle::new(1000, 1000, 1000, 1000, "Custom"));
-        self.cycles.push(BreathCycle::new(4000, 0, 6000, 0, "Longue expiration"));
-        self.cycles.push(BreathCycle::new(4000, 4000, 4000, 4000, "Respiration Carée"));
-        self.cycles.push(BreathCycle::new(4000, 7000, 8000, 0, "Respiration Triangualire"));
     }
 
     fn set_sounds(&mut self){
