@@ -1,7 +1,8 @@
 # Respire
 
-Desktop Breathing App coded in Rust with ratatui
+Desktop Breathing App coded in Rust in ratatui
 
+[![Built With Ratatui](https://ratatui.rs/built-with-ratatui/badge.svg)](https://ratatui.rs/)
 
 
 ## Authors
