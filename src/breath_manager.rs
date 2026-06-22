@@ -130,11 +130,11 @@ impl BreathManager{
     }
 
     fn set_sounds(&mut self){
-        self.sound_inhale.set_source_as_filepath("./sounds/laurainhale.mp3");
+        self.sound_inhale.load_file_source("./sounds/laurainhale.mp3");
         self.sound_inhale.set_volume(0.5);
-        self.sound_exhale.set_source_as_filepath("./sounds/lauraexhale.mp3");
+        self.sound_exhale.load_file_source("./sounds/lauraexhale.mp3");
         self.sound_exhale.set_volume(0.5);
-        self.sound_hold.set_source_as_filepath("./sounds/laurahold.mp3");
+        self.sound_hold.load_file_source("./sounds/laurahold.mp3");
         self.sound_hold.set_volume(0.5);
     }
 

@@ -85,7 +85,7 @@ impl App {
     fn render_cycle_data(&self) -> Line {
 
         let Some(current_cycle) = self.get_current_cycle().copied() else {
-            return Line::from("Pas de cycle sélectionné");
+            return Line::from("No selected cycle");
         };
         let selected_state = self.get_selected_cycle_state();
         let default_style = Style::default();
